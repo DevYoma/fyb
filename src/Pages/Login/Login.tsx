@@ -1,13 +1,17 @@
 import { useState } from "react"
 import { supabase } from "../../supabase/supabaseClient";
-import { useNavigate } from "react-router";
+import { useNavigate, Navigate } from "react-router"; 
+import { useAuth } from "../../Context/AuthContext";
 
 const Login = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
-
+  
   const navigate = useNavigate();
+  const { user } = useAuth();
+
+  if (user) return <Navigate to="/dashboard" replace/>
 
   const handleLogin = async (e: React.FormEvent) => {
   e.preventDefault();
