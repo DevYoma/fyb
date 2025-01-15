@@ -6,12 +6,14 @@ import SignUp from './Pages/Register/Register';
 import AuthLayout from './Layouts/AuthLayout';
 import RegisterRep from './Pages/RegisterRep/RegisterRep';
 import RegisterMember from './Pages/RegisterMember/RegisterMember';
+import Dashboard from './Pages/Dashboard/Dashboard';
 
 function App() {
   return (
     <Routes>
       {/* Landing Page */}
       <Route path="/" element={<Landing />} />
+      <Route path="/dashboard" element={<Dashboard />} />
 
       {/* Auth Pages */}
       <Route element={<AuthLayout />}>

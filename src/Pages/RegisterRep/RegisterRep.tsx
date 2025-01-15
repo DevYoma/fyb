@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { supabase } from "../../supabase/supabaseClient";
 import { nanoid } from "nanoid";
+import { useNavigate } from "react-router";
 
 const RegisterRep = () => {
   const [form, setForm] = useState({
@@ -13,6 +14,7 @@ const RegisterRep = () => {
     school: ""
   });
 
+  const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
 
 
@@ -61,6 +63,7 @@ const RegisterRep = () => {
       if(classError) throw classError;
       console.log(form);
       alert("Sign-up successful!")
+      navigate("/dashboard")  
      } catch (error) {
         // @ts-expect-error("allow")
         alert(`Error: ${error.message}`);

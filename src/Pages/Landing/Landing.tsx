@@ -1,7 +1,4 @@
-import { useEffect, useState } from "react";
-import { supabase } from "../../supabase/supabaseClient";
 import ClassesList from "../../components/ClassesList";
-
 
 const Landing = () => {
   return (
