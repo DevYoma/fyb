@@ -1,10 +1,11 @@
 type Props = {
-    onSubmit: () => void;
-    onEdit: () => void;
-    formData: FormData;
+  onSubmit: () => void;
+  onEdit: () => void;
+  formData: FormData;
 }
 
 const ReviewDetails = ({ formData, onSubmit, onEdit }: Props) => {
+  console.log(formData)
   return (
     <div>
       <h1>Review Your Details</h1>
