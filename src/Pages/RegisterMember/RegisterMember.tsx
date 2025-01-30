@@ -3,11 +3,13 @@ import Stepper from "../../components/Stepper";
 import ClassCodeEntry from "../../components/ClassCodeEntry";
 import ClassMemberForm, { FormData } from "../../components/ClassMemberForm";
 import ReviewDetails from "../../components/ReviewDetails";
+import { supabase } from "../../supabase/supabaseClient";
 
 const RegisterMember = () => {
   // Retrieve initial state from sessionStorage if available
   const savedStep = sessionStorage.getItem("step");
   const savedFormData = sessionStorage.getItem("formData");
+  const savedClassCode = sessionStorage.getItem("classCode");
 
   const [step, setStep] = useState(savedStep ? parseInt(savedStep) : 1 );
   const [formData, setFormData] = useState<FormData>(savedFormData ? JSON.parse(savedFormData) : {});
@@ -33,9 +35,43 @@ const RegisterMember = () => {
     sessionStorage.setItem("step", "2");
   }
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     console.log("Form Submitted:", formData);
     // Perform API submission here
+    const { data: classData, error: classError } = await supabase
+      .from('Classes') // Assuming you have a 'Classes' table
+      .select('id')
+      .eq('class_code', savedClassCode) // Use the class code to get the class_id
+      .single();
+
+    if (classError) {
+      console.error('Error fetching class:', classError);
+      return;
+    }
+
+    const { error } = await supabase
+      .from('classMembers') // Assuming you have a 'classMembers' table
+      .insert([
+        {
+          class_id: classData.id,  // Link the member to the class using the class_id
+          name: formData.name,
+          state: formData.state,
+          dob: formData.dob,
+          favCourse: formData.favCourse,
+          worstCourse: formData.worstCourse,
+          quote: formData.quote,
+          bestLevel: formData.bestLevel,
+          hardestLevel: formData.hardestLevel,
+        }
+      ]);
+
+    if (error) {
+      console.error('Error inserting class member:', error);
+    } else {
+      console.log('Class member successfully registered!');
+      // Optionally clear form data or route to a success page
+    }
+
     sessionStorage.removeItem("step");
     sessionStorage.removeItem("formData");
   };

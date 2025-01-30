@@ -2,10 +2,14 @@ import { useEffect, useState } from "react";
 // import { supabase } from "../supabaseClient";
 import { supabase } from "../../supabase/supabaseClient";
 import { useAuth } from "../../Context/AuthContext";
+import QuestionForm from "../../components/QuestionForm";
+import { User } from '@supabase/supabase-js';
 
 const Dashboard = () => {
-  const [user, setUser] = useState(null);
+  
+  const [user, setUser] = useState<User | null>(null);
   const [classes, setClasses] = useState([]);
+  const [classId, setClassId] = useState<string | null>(null);
   const { signOut } = useAuth();
 
   useEffect(() => {
@@ -15,11 +19,30 @@ const Dashboard = () => {
         console.error("Error fetching user:", error.message);
         return;
       }
+
+      // Fetch classId from user's classes table
+      const { data: classesTable, error: classesTableError } = await supabase
+        .from("classes")
+        .select("id")
+        .eq("admin_id", data.user.id) // this works 
+        .single(); // remove when admin can have multiple classes
+
+        // console.log(typeof classesTable?.id);
+
+      if (classesTableError) {
+        console.error("Error fetching profile:", classesTableError);
+        return;
+      }
+
+        setClassId(classesTable.id);
+
       setUser(data.user);
     };
 
     fetchUser();
   }, []);
+
+  // console.log(user?.id)
 
   // Fetch the classes associated with the logged-in user
   useEffect(() => {
@@ -40,6 +63,8 @@ const Dashboard = () => {
       fetchClasses();
     }
   }, [user]);
+
+  // console.log(classes);
 
   return (
     <div>
@@ -69,14 +94,17 @@ const Dashboard = () => {
       )}
 
       {/* Create New Class Button */}
-      <button onClick={() => console.log("Open modal to create a new class")}>
+      {/* <button onClick={() => console.log("Open modal to create a new class")}>
         Create New Class
-      </button>
+      </button> */}
+
+      <button onClick={() => alert("Set Questions")}>Set Questions</button>
 
       {/* work on the above functionality ☝️ */}
 
-
       <button onClick={signOut}>Log Out</button>
+
+      <QuestionForm classId={classId} />
     </div>
   );
 };
