@@ -73,53 +73,6 @@ const QuestionForm = ({ classId }: QuestionFormProps) => {
   }
 
   return (
-    // <div>
-    //   <h2>Create Questions</h2>
-
-    //   <input
-    //     type="text"
-    //     placeholder="Enter question"
-    //     value={newQuestion.text}
-    //     onChange={(e) =>
-    //       setNewQuestion({ ...newQuestion, text: e.target.value })
-    //     }
-    //   />
-
-    //   <select
-    //     value={newQuestion.type}
-    //     onChange={(e) =>
-    //       setNewQuestion({ ...newQuestion, type: e.target.value })
-    //     }
-    //   >
-    //     <option value="text">Text</option>
-    //     <option value="radio">Radio (Multiple Choice)</option>
-    //     <option value="select">Dropdown</option>
-    //   </select>
-
-    //   {newQuestion.type !== "text" && (
-    //     <input
-    //       type="text"
-    //       placeholder="Comma-separated options"
-    //       value={newQuestion.options}
-    //       onChange={(e) =>
-    //         setNewQuestion({ ...newQuestion, options: e.target.value })
-    //       }
-    //     />
-    //   )}
-
-    //   <button onClick={handleAddQuestion}>Add Question</button>
-
-    //   <ul>
-    //     {questions.map((q, index) => (
-    //       <li key={index}>
-    //         {q.text} ({q.type})
-    //       </li>
-    //     ))}
-    //   </ul>
-
-    //   <button onClick={handleSubmit}>Save Questions</button>
-    // </div>
-
     <div>
       <h2>Question Form</h2>
 
@@ -164,10 +117,11 @@ const QuestionForm = ({ classId }: QuestionFormProps) => {
             {questions.map((q, index) => (
               <li key={index}>
                 {q.question_text} ({q.question_type})
-                {q.options && (
-                //   <p>Options: {JSON.parse(q.options).join(", ")}</p>
-                <p>safe</p>
-                )}
+                {q.options &&
+                  Array.isArray(q.options) &&
+                  q.options.length > 0 && (
+                    <p>Options: {q.options.join(", ")}</p>
+                  )}
               </li>
             ))}
           </ul>
