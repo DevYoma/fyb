@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { supabase } from "../supabase/supabaseClient";
 
 type Prop = {
@@ -18,36 +18,66 @@ export type FormData = {
 
 const ClassMemberForm = ({ onNext }: Prop) => {
   // Retrieve form data from sessionStorage (if available);
-  const savedFormData = sessionStorage.getItem("formData");
+  // const savedFormData = sessionStorage.getItem("formData"); >>>>>> might come back to use this
   const savedClassName = sessionStorage.getItem("className");
   const classCode = sessionStorage.getItem("classCode")
-  const initailFormData = savedFormData ? JSON.parse(savedFormData) : {
-    name: "",
-    state: "",
-    dob: "",
-    favCourse: "",
-    worstCourse: "",
-    quote: "",
-    bestLevel: "",
-    hardestLevel: "", 
-  }
-  // const [form, setForm] = useState<Partial<FormData>>(initailFormData);
+  // console.log(classCode);
 
   const [form, setForm] = useState<Record<string, string>>({}); 
   const [questions, setQuestions] = useState<string[]>([]); 
 
-  // console.log(form);
 
-  // const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-  //   const { name, value } = e.target;
-  //   setForm((prev) => ({ ...prev, [name]: value }));
-  // };
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+    const { name, value } = e.target;
+    setForm((prev) => ({
+      ...prev, 
+      [name]: value
+    }))
+  }
 
-  // const handleSubmit = (e: React.FormEvent) => {
-  //   e.preventDefault();
-  //   console.log(form);
-  //   onNext(form as FormData);
-  // };
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (!classCode) return alert("Class code is missing!"); 
+
+    try {
+      // Fetch classId using classCode
+      const { data: classData, error: classError } = await supabase
+        .from("classes")
+        .select("id")
+        .eq("class_code", classCode)
+        .single();
+
+      if (classError || !classData) throw new Error("Class not found");
+
+      const classId = classData.id;
+
+      // Separate form data into name, email, and responses
+      const { name, email, ...responses } = form;
+
+      console.log("Dynamic Details>>>>>", responses);
+
+      onNext();
+
+      // // Insert into Supabase
+      // const { error } = await supabase.from("class_members").insert([
+      //   {
+      //     name,
+      //     email,
+      //     class_id: classId,
+      //     responses, // Stored as JSONB
+      //   },
+      // ]);
+
+      // if (error) throw error;
+
+      // alert("Registration successful!");
+    } catch (error) {
+       console.error("Error submitting form:", error);
+    }
+
+    console.log("Form Response", form)
+  }
 
   useEffect(() => {
     const fetchQuestions = async () => {
@@ -76,13 +106,16 @@ const ClassMemberForm = ({ onNext }: Prop) => {
         // console.log(questionsData)
 
         // Prepare the questions list
-        const questionList = questionsData.map((q) => q.question_text); // Assuming the column name is 'question_text'
+        const questionList = questionsData.map((q) => q); // Assuming the column name is 'question_text'
         setQuestions(questionList);
 
         // Initialize form state
-        const initialFormState: Record<string, string> = {};
+        const initialFormState: Record<string, string> = {
+          email: "", 
+          name: "" // making each class question have name and email fields (not dynamic)
+        };
         questionList.forEach((q) => {
-          initialFormState[q] = "";
+          initialFormState[q.question_text] = "";
         });
         setForm(initialFormState);
       } catch (error) {
@@ -93,82 +126,74 @@ const ClassMemberForm = ({ onNext }: Prop) => {
     fetchQuestions();
   }, [classCode]);
 
-  const handleChange = () => {
-
-  }
-
-  console.log(questions)
+  // console.log(questions) >>>>>>>>>>>>>>>>>>>>>>>
 
   return (
-    <form>
+    <form onSubmit={handleSubmit}>
       <h1>{savedClassName}</h1>
       <h3>Fill Your Details</h3>
-      {/* <input
-        name="name"
-        type="text"
-        placeholder="Name"
-        value={form.name}
-        onChange={handleChange}
-      />
-      <input
-        name="state"
-        type="text"
-        placeholder="State"
-        value={form.state}
-        onChange={handleChange}
-      />
-      <input name="dob" type="date" onChange={handleChange} value={form.dob}/>
-      <input
-        name="favCourse"
-        type="text"
-        placeholder="Favorite Course"
-        value={form.favCourse}
-        onChange={handleChange}
-      />
-      <input
-        name="worstCourse"
-        type="text"
-        placeholder="Worst Course"
-        value={form.worstCourse}
-        onChange={handleChange}
-      />
-      <input
-        name="quote"
-        type="text"
-        placeholder="Quote/Mantra"
-        value={form.quote}
-        onChange={handleChange}
-      />
-      <input
-        name="bestLevel"
-        type="text"
-        placeholder="Best Level"
-        value={form.bestLevel}
-        onChange={handleChange}
-      />
-      <input
-        name="hardestLevel"
-        type="text"
-        placeholder="Hardest Level"
-        value={form.hardestLevel}
-        onChange={handleChange}
-      /> */}
-
-
-
+      <div>
+        <label htmlFor="name">Name</label>
+        <input
+          type="text"
+          name="name"
+          placeholder="Enter your Name"
+          value={form.name || ""}
+          onChange={handleChange}
+        />
+      </div>
+      <div>
+        <label htmlFor="email">Email</label>
+        <input
+          type="email"
+          name="email"
+          placeholder="Enter your email"
+          value={form.email || ""}
+          onChange={handleChange}
+        />
+      </div>
+      {/* NB: NAME AND EMAIL SHOULD BE STATIC cuz all classes need this */}
       {questions.map((q, index) => (
         <div key={index}>
-          <label>{q.question_text} d</label>
-          <input
-            name={q.question_text}
-            type={q.question_type}
-            placeholder={q.question_text}
-            value={form[q.question_text] || ""}
-            onChange={handleChange}
-          />
+          <label>{q.question_text}</label>
+          {q.question_type === "radio" && q.options ? (
+            q.options.map((option: string) => (
+              <div key={option}>
+                <input
+                  type="radio"
+                  name={q.question_text}
+                  value={option}
+                  checked={form[q.question_text] === option}
+                  onChange={handleChange}
+                />
+                <label>{option}</label>
+              </div>
+            ))
+          ) : q.question_type === "select" && q.options ? (
+            <select
+              name={q.question_text}
+              value={form[q.question_text] || ""}
+              onChange={handleChange}
+            >
+              <option value="">Select an option</option>
+              {q.options.map((option: string) => (
+                <option key={option} value={option}>
+                  {option}
+                </option>
+              ))}
+            </select>
+          ) : (
+            <input
+              name={q.question_text}
+              type={q.question_type}
+              placeholder={q.question_text}
+              value={form[q.question_text] || ""}
+              onChange={handleChange}
+            />
+          )}
         </div>
       ))}
-      <button type="submit">Next</button>
+      <button type="submit">Join Class</button>
     </form>
   );
 };
