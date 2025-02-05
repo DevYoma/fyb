@@ -1,14 +1,46 @@
+import { useState } from "react";
+import { supabase } from "../supabase/supabaseClient";
+
 type Props = {
   onSubmit: () => void;
   onEdit: () => void;
-  // formData: FormData;
 }
 
-const ReviewDetails = ({ onSubmit, onEdit }: Props) => {
-  // console.log(formData)
+const ReviewDetails = ({ onEdit }: Props) => {
+  const [loading, setLoading] = useState(false);
+
   const formSessionData = sessionStorage.getItem("classMemberFormData");
   const parsedData = formSessionData ? JSON.parse(formSessionData) : {};
-  console.log(formSessionData);
+  // console.log(parsedData);
+
+  const classId = sessionStorage.getItem("classId");
+
+  const { name, email, ...responses } = parsedData;
+  console.log(name, email, classId, responses);
+
+
+  const onhandleSubmit = async() => {
+    console.log("testing testing");
+    try {
+      setLoading(true);
+      // Insert into Supabase
+      const { error } = await supabase.from("class_members").insert([
+        {
+          name,
+          email,
+          class_id: classId,
+          responses, // Stored as JSONB
+        },
+      ]);
+      if (error) throw error;
+      alert("Registration successful!");
+    } catch (error) {
+      console.log("Error submitting form", error);
+      setLoading(false)
+    }finally{
+      setLoading(false);
+    }
+  }
   
   return (
     <div>
@@ -21,7 +53,7 @@ const ReviewDetails = ({ onSubmit, onEdit }: Props) => {
         ))}
       </ul>
       <button onClick={onEdit}>Edit</button>
-      <button onClick={onSubmit}>Submit</button>
+      <button onClick={onhandleSubmit}>{loading ? "Loading..." : "Submit"}  </button>
     </div>
   );
 };
