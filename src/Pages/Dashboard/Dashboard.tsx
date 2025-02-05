@@ -1,5 +1,4 @@
 import { useEffect, useState } from "react";
-// import { supabase } from "../supabaseClient";
 import { supabase } from "../../supabase/supabaseClient";
 import { useAuth } from "../../Context/AuthContext";
 import QuestionForm from "../../components/QuestionForm";

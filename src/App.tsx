@@ -8,17 +8,43 @@ import RegisterRep from './Pages/RegisterRep/RegisterRep';
 import RegisterMember from './Pages/RegisterMember/RegisterMember';
 import Dashboard from './Pages/Dashboard/Dashboard';
 import PrivateRoute from './components/PrivateRoute';
+import Success from './Pages/Success/Success';
+import ClassDashboard from './Pages/ClassDashboard/ClassDashboard';
 
 function App() {
   return (
     <Routes>
       {/* Landing Page */}
       <Route path="/" element={<Landing />} />
-      <Route path="/dashboard" element={
-        <PrivateRoute>
-          <Dashboard />
-        </PrivateRoute>
-      } />
+      <Route
+        path="/dashboard"
+        element={
+          <PrivateRoute>
+            <Dashboard />
+          </PrivateRoute>
+        }
+      />
+      {/* 
+      <Route
+        path="/success"
+        element={
+          <PrivateRoute>
+            <Success />
+          </PrivateRoute>
+        }
+      /> */}
+
+      <Route path="/success" element={<Success />} />
+      <Route path="/class-dashboard" element={<ClassDashboard />} />
+
+      <Route
+        path="/success"
+        element={
+          <PrivateRoute>
+            <ClassDashboard />
+          </PrivateRoute>
+        }
+      />
 
       {/* Auth Pages */}
       <Route element={<AuthLayout />}>

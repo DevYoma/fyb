@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { supabase } from "../supabase/supabaseClient";
+import { useNavigate } from "react-router";
 
 type Props = {
   onSubmit: () => void;
@@ -7,6 +8,7 @@ type Props = {
 }
 
 const ReviewDetails = ({ onEdit }: Props) => {
+  const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
 
   const formSessionData = sessionStorage.getItem("classMemberFormData");
@@ -34,6 +36,8 @@ const ReviewDetails = ({ onEdit }: Props) => {
       ]);
       if (error) throw error;
       alert("Registration successful!");
+      sessionStorage.clear();
+      navigate("/success")  
     } catch (error) {
       console.log("Error submitting form", error);
       setLoading(false)
