@@ -19,6 +19,8 @@ export type FormData = {
 const ClassMemberForm = ({ onNext }: Prop) => {
   // Retrieve form data from sessionStorage (if available);
   // const savedFormData = sessionStorage.getItem("formData"); >>>>>> might come back to use this
+  const savedFormData = sessionStorage.getItem("classMemberFormData");
+  const parsedFormData = savedFormData ? JSON.parse(savedFormData) : {};
   const savedClassName = sessionStorage.getItem("className");
   const classCode = sessionStorage.getItem("classCode")
   // console.log(classCode);
@@ -56,8 +58,9 @@ const ClassMemberForm = ({ onNext }: Prop) => {
       const { name, email, ...responses } = form;
 
       console.log("Dynamic Details>>>>>", responses);
+      sessionStorage.setItem("classMemberFormData", JSON.stringify(form));
 
-      onNext();
+      onNext(); 
 
       // // Insert into Supabase
       // const { error } = await supabase.from("class_members").insert([
@@ -78,7 +81,16 @@ const ClassMemberForm = ({ onNext }: Prop) => {
 
     console.log("Form Response", form)
   }
+  console.log("Saved form Response", savedFormData)
 
+  // USEEFFECT TO CHECK IF FORMDATA HAS BEEN SAVED BEFORE(USER ON HANDLEEDIT)
+  useEffect(() => {
+    if(savedFormData){
+      setForm(JSON.parse(savedFormData))
+    }
+  }, [])
+
+  // USEEFFECT TO FETCH QUESTIONS
   useEffect(() => {
     const fetchQuestions = async () => {
       if (!classCode) return;
@@ -110,10 +122,37 @@ const ClassMemberForm = ({ onNext }: Prop) => {
         setQuestions(questionList);
 
         // Initialize form state
-        const initialFormState: Record<string, string> = {
-          email: "", 
-          name: "" // making each class question have name and email fields (not dynamic)
+        let initialFormState: Record<string, string> = {
+          // email: "", 
+          // name: "" // making each class question have name and email fields (not dynamic)
         };
+
+         if (parsedFormData) {
+           // If user is returning from ReviewDetails, use parsedFormData
+           initialFormState = {
+             email: parsedFormData.email || "",
+             name: parsedFormData.name || "",
+           };
+
+           // Add dynamic fields from parsedFormData
+           Object.keys(parsedFormData).forEach((key) => {
+             if (key !== "name" && key !== "email") {
+               initialFormState[key] = parsedFormData[key];
+             }
+           });
+         } else {
+           // Otherwise, initialize empty form fields
+           initialFormState = {
+             email: "",
+             name: "",
+           };
+
+           // Add empty fields for dynamic questions
+           questionList.forEach((q) => {
+             initialFormState[q.question_text] = "";
+           });
+         }
+
         questionList.forEach((q) => {
           initialFormState[q.question_text] = "";
         });
@@ -138,7 +177,7 @@ const ClassMemberForm = ({ onNext }: Prop) => {
           type="text"
           name="name"
           placeholder="Enter your Name"
-          value={form.name || ""}
+          value={parsedFormData ? parsedFormData.name : ""}
           onChange={handleChange}
         />
       </div>
@@ -148,7 +187,7 @@ const ClassMemberForm = ({ onNext }: Prop) => {
           type="email"
           name="email"
           placeholder="Enter your email"
-          value={form.email || ""}
+          value={parsedFormData ? parsedFormData.email : ""}
           onChange={handleChange}
         />
       </div>
@@ -163,7 +202,7 @@ const ClassMemberForm = ({ onNext }: Prop) => {
                   type="radio"
                   name={q.question_text}
                   value={option}
-                  checked={form[q.question_text] === option}
+                  checked={(parsedFormData[q.question_text] || form[q.question_text]) === option}
                   onChange={handleChange}
                 />
                 <label>{option}</label>
@@ -172,7 +211,7 @@ const ClassMemberForm = ({ onNext }: Prop) => {
           ) : q.question_type === "select" && q.options ? (
             <select
               name={q.question_text}
-              value={form[q.question_text] || ""}
+              value={parsedFormData[q.question_text] || form[q.question_text] || ""}
               onChange={handleChange}
             >
               <option value="">Select an option</option>
@@ -187,7 +226,7 @@ const ClassMemberForm = ({ onNext }: Prop) => {
               name={q.question_text}
               type={q.question_type}
               placeholder={q.question_text}
-              value={form[q.question_text] || ""}
+              value={parsedFormData[q.question_text] || form[q.question_text] || ""}
               onChange={handleChange}
             />
           )}

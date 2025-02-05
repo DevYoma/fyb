@@ -11,15 +11,16 @@ const RegisterMember = () => {
   const savedFormData = sessionStorage.getItem("formData");
   const savedClassCode = sessionStorage.getItem("classCode");
 
+  // GLOBAL STEPPER FORM DATA
   const [step, setStep] = useState(savedStep ? parseInt(savedStep) : 1 );
   const [formData, setFormData] = useState<FormData>(savedFormData ? JSON.parse(savedFormData) : {});
-
+  
   const steps = ["Enter Code", "Fill Details", "Review & Submit"];
 
   const handleNext = (data: FormData) => {
-    console.log("Handle NEXT clicked");
+    console.log("Handle NEXT clicked"); 
     if (step === 2) {
-      setFormData(data);
+      // setFormData(data);
     }
     // setStep((prev) => prev + 1); 
     const nextStep = step + 1; 
@@ -89,7 +90,7 @@ const RegisterMember = () => {
       {step === 2 && <ClassMemberForm onNext={handleNext} />}
       {step === 3 && (
         <ReviewDetails
-          formData={formData}
+          // formData={formData}
           onEdit={handleEdit}
           onSubmit={handleSubmit}
         />
