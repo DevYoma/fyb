@@ -1,103 +1,125 @@
-import { useEffect, useState } from "react";
-import { supabase } from "../supabase/supabaseClient";
+  import { useEffect, useState } from "react";
+  import { supabase } from "../supabase/supabaseClient";
 
-// type the classId
+  // type the classId
 
-type QuestionFormProps = {
-    classId: string;
-}
+  type QuestionFormProps = {
+      classId: string;
+  }
 
-const QuestionForm = ({ classId }: QuestionFormProps) => {
-  console.log(classId);
-  const [questions, setQuestions] = useState<unknown[]>([]);
-  const [newQuestion, setNewQuestion] = useState({
-    text: "",
-    type: "text",
-    options: "",
-  });
+  const QuestionForm = ({ classId }: QuestionFormProps) => {
+    // console.log(classId);
+    const [questions, setQuestions] = useState<unknown[]>([]);
+    const [isAdding, setIsAdding] = useState(false);
+    const [newQuestion, setNewQuestion] = useState({
+      question_text: "",
+      question_type: "text",
+      options: "",
+    });
+    const [isEditing, setIsEditing] = useState(false);
 
-  const handleAddQuestion = () => {
-    if (!newQuestion.text.trim()) return;
+    const handleAddQuestion = () => {
+      if (!newQuestion.question_text.trim())
+        return alert("Question text cannot be empty.");
 
-    setQuestions([...questions, newQuestion]);
-    setNewQuestion({ text: "", type: "text", options: "" }); // Reset input
-  };
+      setQuestions([...questions, newQuestion]);
+      setNewQuestion({ question_text: "", question_type: "text", options: "" }); // Reset form
+    };
+    
+    // fetch existing questions from supabase when the component loads
+    useEffect(() => {
+      const fetchQuestions = async () => {
+        const { data, error } = await await supabase
+          .from("questions")
+          .select("*")
+          .eq("class_id", classId);
+    
+        if (error) {
+          console.error("Error fetching questions:", error);
+        } else {
+          setQuestions(data);
+          if (data.length > 0) setIsEditing(true);
+          console.log(data)
+        }
+      };
 
-  const handleSubmit = async () => {
-    if (questions.length === 0) return alert("Add at least one question.");
+      fetchQuestions();
+    }, [classId]);
 
-    const formattedQuestions = questions.map((q) => ({
-      class_id: classId,
-      question_text: q.text,
-      question_type: q.type,
-      options:
-        q.type === "radio" || q.type === "select"
-          ? q.options.split(",").map((option: string) => option.trim()) // Create an array of options
-          : null,
-    }));
+    // Save new questions or update existing ones
+    const handleSaveOrUpdate = async () => {
+      if (questions.length === 0)
+        return alert("Please add at least one question.");
 
-    const { error } = await supabase
-      .from("questions")
-      .insert(formattedQuestions);
+      const formattedQuestions = questions.map((q) => ({
+        class_id: classId,
+        question_text: q.question_text,
+        question_type: q.question_type,
+        options:
+          q.question_type === "radio" || q.question_type === "select"
+            ? Array.isArray(q.options) // ✅ Check if `options` is already an array
+              ? q.options // ✅ Use it directly if it's an array
+              : q.options.split(",").map((opt) => opt.trim()) // ✅ Convert string to array
+            : null,
+      }));
 
-    if (error) console.error("Error saving questions:", error);
-    else alert("Questions saved successfully!");
-  };
+      // If editing, delete old questions first
+      if (isEditing) {
+        const { error: deleteError } = await supabase
+          .from("questions")
+          .delete()
+          .eq("class_id", classId);
 
-  useEffect(() => {
-    const fetchQuestions = async () => {
-      // Query to fetch questions based on class_id
-      const { data, error } = await supabase
+        if (deleteError) {
+          console.error("Error deleting old questions:", deleteError);
+          alert("Error updating questions. Check the console.");
+          return;
+        }
+      }
+
+      // Insert new questions
+      const { error: insertError } = await supabase
         .from("questions")
-        .select("*")
-        .eq("class_id", classId); // Filter by class_id
+        .insert(formattedQuestions);
 
-      if (error) {
-        console.error("Error fetching questions:", error);
+      if (insertError) {
+        console.error("Error saving questions:", insertError);
+        alert("Error saving questions. Check the console.");
       } else {
-        // Log the questions data to the console
-        // Update the questions state with fetched data
-        setQuestions(data);
-        console.log("Questions for class", "classId", data);
+        alert(
+          isEditing
+            ? "Questions updated successfully!"
+            : "Questions saved successfully!"
+        );
+        setIsEditing(true);
       }
     };
 
-    // Fetch questions when the component is mounted
-    fetchQuestions();
-  }, [classId]); // This runs when the classId prop changes
+    return (
+      <div>
+        <h2>Question Form</h2>
 
-  console.log(questions.length)
-
-  const handleUpdateQuestions = () => {
-
-  }
-
-  return (
-    <div>
-      <h2>Question Form</h2>
-
-      {/* Show the form if no questions are set */}
-      {questions.length === 0 ? (
+        {/* Input Form */}
         <div>
           <input
             type="text"
             placeholder="Enter question"
-            value={newQuestion.text}
+            value={newQuestion.question_text}
             onChange={(e) =>
-              setNewQuestion({ ...newQuestion, text: e.target.value })
+              setNewQuestion({ ...newQuestion, question_text: e.target.value })
             }
           />
           <select
-            value={newQuestion.type}
+            value={newQuestion.question_type}
             onChange={(e) =>
-              setNewQuestion({ ...newQuestion, type: e.target.value })
+              setNewQuestion({ ...newQuestion, question_type: e.target.value })
             }
           >
             <option value="text">Text</option>
             <option value="radio">Radio (Multiple Choice)</option>
             <option value="select">Dropdown</option>
           </select>
-          {newQuestion.type !== "text" && (
+          {newQuestion.question_type !== "text" && (
             <input
               type="text"
               placeholder="Comma-separated options"
@@ -108,28 +130,26 @@ const QuestionForm = ({ classId }: QuestionFormProps) => {
             />
           )}
           <button onClick={handleAddQuestion}>Add Question</button>
-          <button onClick={handleSubmit}>Save Questions</button>
         </div>
-      ) : (
-        <div>
-          <h3>Questions for this class:</h3>
-          <ul>
-            {questions.map((q, index) => (
-              <li key={index}>
-                {q.question_text} ({q.question_type})
-                {q.options &&
-                  Array.isArray(q.options) &&
-                  q.options.length > 0 && (
-                    <p>Options: {q.options.join(", ")}</p>
-                  )}
-              </li>
-            ))}
-          </ul>
-          <button onClick={handleUpdateQuestions}>Update Questions</button>
-        </div>
-      )}
-    </div>
-  );
-};
 
-export default QuestionForm;
+        {/* Questions List */}
+        {questions.length > 0 && (
+          <div>
+            <h3>Questions for this class:</h3>
+            <ul>
+              {questions.map((q, index) => (
+                // {console.log{questions}}
+                <li key={index}>  
+                  {q.question_text} ({q.question_type})
+                  {q.question_type !== "text" && q.options && <p>Options: {q.options}</p>}
+                </li>
+              ))}
+            </ul>
+            <button onClick={handleSaveOrUpdate}>{isEditing ? "Update Questions" : "Save Questions"}</button>
+          </div>
+        )}
+      </div>
+    );
+  };
+
+  export default QuestionForm;
